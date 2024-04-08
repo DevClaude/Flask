@@ -1,0 +1,82 @@
+{% extends "base.html" %}
+
+{% block title %}Name Page{% endblock %}
+
+{% block content %}
+
+    {% with messages = get_flashed_messages() %}
+        {% if messages %}
+            {% for msg in messages%}
+                <div class="alert alert-warning alert-dismissible fade show" role="alert">
+                    {{msg}}
+                <button type="button" class="close" data-dismiss="alert" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            {% endfor %}
+        {% endif %}
+    {% endwith %}
+
+    {% if name %}
+        <h1>User Added!</h1>
+        <br />
+    {% else %}
+        <div class="shadow p-3 mb-5 bg-white rounded">
+            <form action={{url_for('add_user')}} method='POST'>
+                {{ form.hidden_tag() }}
+
+                {{ form.name.label(class="form-label") }}
+                {{ form.name(class="form-control" ) }}
+                <br/ >
+
+                {{ form.user_name.label(class="form-label") }}
+                {{ form.user_name(class="form-control" ) }}
+                <br/ >
+
+                {{ form.email.label(class="form-label") }}
+                {{ form.email(class="form-control" ) }}
+                <br/ >
+
+                {{ form.favorite_color.label(class="form-label") }}
+                {{ form.favorite_color(class="form-control" ) }}
+                <br/ >
+
+                {{ form.password_hash.label(class="form-label") }}
+                {{ form.password_hash(class="form-control" ) }}
+                <br/ >
+
+                {{ form.verify_password_hash.label(class="form-label") }}
+                {{ form.verify_password_hash(class="form-control" ) }}
+                <br/ >
+
+                {{ form.submit(class="btn btn-secondary mt-3") }}
+            </form>
+        </div>
+        <h1>User List:</h1>
+        <br />
+        <table class="table table-bordered table-striped table-hover table-responsive-md">
+            <thead>
+                <tr>
+                    <th scope="col">Id</th>
+                    <th scope="col">Name</th>
+                    <th scope="col" class='text-nowrap'>User Name</th>
+                    <th scope="col">Email</th>
+                    <th scope="col">Favorite Color</th>
+                    <th scope="col">Action</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for user in users %}
+                    <tr>               
+                        <th scope="row">{{user.id}}</th>
+                        <td><a href={{url_for('update_user', id=user.id)}} class='text-nowrap'>{{user.name}}</a></td>
+                        <th scope="row">{{user.user_name}}</th>
+                        <td scope="col">{{user.email}}</td>        
+                        <td scope="col">{{user.favorite_color}}</td>
+                        <td><a href={{url_for('delete_user', id=user.id)}}>Delete</a></td>               
+                    </tr>
+                {% endfor %}
+            </tbody>
+            </table>
+    {% endif %}
+{% endblock %}

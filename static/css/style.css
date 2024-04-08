@@ -1,0 +1,14 @@
+h1 {
+  color: darkblue;
+  font-size: 30px;
+}
+
+body {
+  background-color: #f4f4f4;
+}
+
+#demo {
+  font-size: 12px;
+  margin-top: 5px;
+  color: darkblue
+}

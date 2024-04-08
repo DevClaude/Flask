@@ -1,0 +1,55 @@
+{% extends "base.html" %}
+
+{% block title %}Name Page{% endblock %}
+
+{% block content %}
+
+    {% with messages = get_flashed_messages() %}
+        {% if messages %}
+            {% for msg in messages%}
+                <div class="alert alert-warning alert-dismissible fade show" role="alert">
+                    {{msg}}
+                <button type="button" class="close" data-dismiss="alert" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            {% endfor %}
+        {% endif %}
+    {% endwith %}
+    {% if current_user.is_authenticated %}
+        {% if name %}
+            <h1>User Added!</h1>
+            <br />
+        {% else %}
+            <h1>Add Blog Post</h1>
+            <br />
+            <div class="shadow p-3 mb-5 bg-white rounded">
+                <form action={{url_for('add_post')}} method='POST'>
+                    {{ form.hidden_tag() }}
+
+                    {{ form.title.label(class="form-label") }}
+                    {{ form.title(class="form-control" ) }}
+                    <br/ >
+
+                    {{ form.slug.label(class="form-label") }}
+                    {{ form.slug(class="form-control" ) }}
+                    <br/ >
+
+                    {{ form.content.label(class="form-label") }}
+                    {{ form.content(class="form-control", rows='5') }}
+                    <br/ >
+
+                    {{ form.submit(class="btn btn-secondary mt-3") }}
+                </form>
+            </div>
+
+            <br/><br/><br/>
+        {% endif %}
+    {% else %}
+        <h2>Must Be Logged In..</h2>
+        <p>Sorry. You mus be logged in to access this page!</p>
+        <a href='login'>Login Here</a>
+
+    {% endif %}
+    
+{% endblock %}

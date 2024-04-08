@@ -1,0 +1,9 @@
+.DS_Store
+
+# Environments
+.venv
+venv/
+
+# Python
+__pycache__
+webforms/__pycache__

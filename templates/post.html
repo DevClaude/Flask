@@ -1,0 +1,38 @@
+{% extends "base.html" %}
+
+{% block title %}Name Page{% endblock %}
+
+{% block content %}
+
+    {% with messages = get_flashed_messages() %}
+        {% if messages %}
+            {% for msg in messages%}
+                <div class="alert alert-warning alert-dismissible fade show" role="alert">
+                    {{msg}}
+                <button type="button" class="close" data-dismiss="alert" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            {% endfor %}
+        {% endif %}
+    {% endwith %}
+
+	<br/>
+
+
+	<div class="shadow p-3 mb-5 bg-white rounded">
+		<h4>{{post.title}}</h4>
+		<small>
+			By: {{post.author}}<br/>
+			{{post.slug}} | {{post.date_posted}}
+			<br/>
+			{{post.content}}
+		</small>
+		<br/>	
+	</div>
+
+	<a href={{url_for('edit_post', id=post.id)}} type='button' class='btn btn-outline-secondary btn-sm'>Edit Post</a>
+	<a href={{url_for('posts')}} type='button' class='btn btn-outline-secondary btn-sm'>Back to Blog</a>
+	<a href={{url_for('delete_post', id=post.id)}} type='button' class='btn btn-outline-danger btn-sm'>Delete Post</a>
+
+{% endblock %}

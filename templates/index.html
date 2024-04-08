@@ -1,0 +1,26 @@
+{% extends "base.html" %}
+
+{% block title %}Example Page{% endblock %}
+
+{% block content %}
+
+  <h1>Hello World!</h1>
+
+  <p>this is my first webpage!!</p>
+
+  <p>My name is {{ first_name }} </p>
+
+  <p>{{ stuff|title }}</p>
+
+  <h3>Favorite Pizza:</h3>
+  {% for pizza in favorite_pizza %}
+
+    {% if pizza == 41 %}
+      {{ pizza + 100}}<br/>
+    {% else %}
+      {{ pizza }}<br/>
+    {% endif %}
+    
+  {% endfor %}
+
+{% endblock %}
