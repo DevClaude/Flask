@@ -41,6 +41,8 @@
 
                     {{ form.submit(class="btn btn-secondary mt-3") }}
                 </form>
+                {{ ckeditor.load() }}
+                {{ ckeditor.config(name='content') }}
             </div>
 
             <br/><br/><br/>

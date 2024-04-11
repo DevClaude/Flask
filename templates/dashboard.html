@@ -19,21 +19,32 @@
 	<h1>Dashboard</h1>    
     <br />
     <div class="shadow p-3 mb-5 bg-white rounded">
-        <strong>Name:</strong>
-        {{current_user.name}}<br/>
-        <strong>Username:</strong>
-        {{current_user.user_name}}<br/>
-        <strong>User Id:</strong>
-        {{current_user.id}}<br/>
-        <strong>Email:</strong>
-        {{current_user.email}}<br/>
-        <strong>Favorite Color:</strong>
-        {{current_user.favorite_color}}<br/>
-        <strong>Date Joined:</strong>
-        {{current_user.date}}<br/>
-        <a href={{ url_for('logout') }} class="btn btn-secondary mt-4">Logout</a>
-        <a href={{url_for('update_user', id=current_user.id)}} class='text-nowrap btn btn-secondary mt-4'>Edit User</a>
-        <a href={{url_for('delete_user', id=current_user.id)}} class='text-nowrap btn btn-danger mt-4'>Delete User</a> 
+        <div class='container'>
+            <div class='row'>
+                <div class='col-8'>
+                    <strong>Name:</strong>
+                    {{current_user.name}}<br/>
+                    <strong>Username:</strong>
+                    {{current_user.user_name}}<br/>
+                    <strong>User Id:</strong>
+                    {{current_user.id}}<br/>
+                    <strong>Email:</strong>
+                    {{current_user.email}}<br/>
+                    <strong>Favorite Color:</strong>
+                    {{current_user.favorite_color}}<br/>
+                    <strong>Date Joined:</strong>
+                    {{current_user.date}}<br/>
+                    <strong>About Author:</strong>
+                    {{current_user.about_author}}<br/>
+                    <a href={{ url_for('logout') }} class="btn btn-secondary mt-4">Logout</a>
+                    <a href={{url_for('update_user', id=current_user.id)}} class='text-nowrap btn btn-secondary mt-4'>Edit User</a>
+                    <a href={{url_for('delete_user', id=current_user.id)}} class='text-nowrap btn btn-danger mt-4'>Delete User</a> 
+                </div>
+                <div class='col-4'>
+                    <img src={{ url_for('static', filename='images/default_profile_pic.png') }} class='img-fluid'>
+                </div>
+            </div>
+        </div>
     </div>
 
     <div class="card">
@@ -41,7 +52,7 @@
             Update Profile
         </div>
         <div class="card-body">
-            <form action='/user/update/{{current_user.id}}' method='POST'>
+            <form action='/user/update/{{current_user.id}}' method='POST' enctype="multipart/form-data">
                 {{ form.hidden_tag() }}
 
                 {{ form.name.label(class="form-label") }}
@@ -55,6 +66,12 @@
 
                 {{ form.favorite_color.label(class="form-label") }}
                 {{ form.favorite_color(class="form-control", value=current_user.favorite_color  ) }}
+
+                {{ form.about_author.label(class="form-label") }}
+                <textarea name='about_author' class='form-control'>{{current_user.about_author}}</textarea> 
+
+                {{ form.profile_pic.label(class="form-label") }}
+                {{ form.profile_pic(class="form-control form-control-sm pb-5", value=current_user.profile_pic ) }}
 
                 {{ form.submit(class="btn btn-secondary mt-3") }}
 

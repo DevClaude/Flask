@@ -23,15 +23,17 @@
 		<div class="shadow p-3 mb-5 bg-white rounded">
 			<h4>{{post.title}}</h4>
 			<small>
-				By: {{post.author}}<br/>
+				By: {{post.user.name}}<br/>
 				{{post.slug}} | {{post.date_posted}}
 				<br/>
-				{{post.content}}
+				{{post.content|safe}}
 			</small>
 			<br/>
 			<a href={{url_for('post', id=post.id)}} type='button' class='btn btn-outline-secondary btn-sm mt-3'>View Post</a>
-			<a href={{url_for('edit_post', id=post.id)}} type='button' class='btn btn-outline-secondary btn-sm mt-3'>Edit Post</a>
-			<a href={{url_for('delete_post', id=post.id)}} type='button' class='btn btn-outline-danger btn-sm mt-3'>Delete Post</a>
+			{% if post.user_id == current_user.id%}
+				<a href={{url_for('edit_post', id=post.id)}} type='button' class='btn btn-outline-secondary btn-sm mt-3'>Edit Post</a>
+				<a href={{url_for('delete_post', id=post.id)}} type='button' class='btn btn-outline-danger btn-sm mt-3'>Delete Post</a>
+			{% endif %}
 		</div>
 	{% endfor %}
 		

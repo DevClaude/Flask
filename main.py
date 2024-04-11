@@ -4,15 +4,22 @@ from flask_migrate import Migrate
 from datetime import datetime
 from werkzeug.security import generate_password_hash, check_password_hash
 from flask_login import UserMixin, login_user, LoginManager, login_required, logout_user, current_user
-from webforms.webforms import UserForm, LoginForm, NameForm, PasswordForm, PostForm
+from webforms.webforms import UserForm, LoginForm, NameForm, PasswordForm, PostForm, SearchForm
+from flask_ckeditor import CKEditor
+from werkzeug.utils import secure_filename
+import uuid as uuid
+import os
 
 # Create a Flask Instances
 app = Flask(__name__)
 
+# Add CKEditor
+ckeditor = CKEditor(app)
+
 # Secret Key
 app.config['SECRET_KEY'] = 'Secret Key'
-# Add Database
 
+# Add Database
 # SQLite DB
 # app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///user.db'
 # app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
@@ -33,10 +40,12 @@ class Users(db.Model, UserMixin):
     name = db.Column(db.String(200), nullable=False)
     email = db.Column(db.String(120), nullable=False, unique=True)
     favorite_color = db.Column(db.String(120))
+    about_author = db.Column(db.Text(500), nullable=True)
     date = db.Column(db.DateTime, default=datetime.utcnow)
     password_hash  = db.Column(db.String(128), nullable=False)
+    profile_pic = db.Column(db.String(128), nullable=True)
     # User Can Have Many Posts
-    post = db.relationship('Posts', backref='post')
+    posts = db.relationship('Posts', backref='user')
     
     @property
     def password(self):
@@ -84,7 +93,43 @@ def json():
         'Mary': 'Cheese',
         'Tim': 'Mushroom'
     }
+
+# Pass Stuff To Navbar
+@app.context_processor
+def base():
+    form= SearchForm()
+    return dict(form=form)
     
+# Search
+@app.route('/search', methods=['POST'])
+def search():
+    form = SearchForm()
+    if form.validate_on_submit():
+        # Get data from submitted form
+        post.searched = form.searched.data
+        
+        #Query the Database
+        posts = Posts.query.filter(Posts.content.like(f'%{post.searched}%'))
+        posts = posts.order_by(Posts.title).all()
+        
+        return render_template(
+            'search.html',
+            form= form,
+            searched= post.searched,
+            posts= posts
+            )
+
+# Admin
+@app.route('/admin')
+@login_required
+def admin():
+    id = current_user.id
+    if id == 8:
+        return render_template('admin.html')
+    else:
+        flash("You don't have access! You must be the admin to access the admin page!")
+        return redirect(url_for('dashboard'))
+
 #-------------------------- User Routes ----------------------------    
 # Add User on Database Record 
 @app.route('/user/add', methods=['GET','POST'])
@@ -125,13 +170,24 @@ def update_user(id):
         user_to_update.email = request.form['email']
         user_to_update.favorite_color = request.form['favorite_color']
         user_to_update.user_name = request.form['user_name']
+        user_to_update.about_author = request.form['about_author']
+        file = request.files['profile_pic']
+        
+        # Grab image
+        pic_filename = secure_filename(file.filename)
+        # Set UUID
+        pic_name = str(uuid.uuid1()) + '_' + pic_filename
+        user_to_update.profile_pic = pic_name
         try:
+            form.about_author.data = current_user.about_author
             db.session.commit()
             flash('User Updated Successfully!')
-            return redirect(url_for(
-				'dashboard'
-			))
+            return render_template(
+                'dashboard.html',
+                form=form
+            )
         except:
+            form.about_author.data = current_user.about_author
             flash('Error, looks like there was a problem please try again')
             return render_template(
 				'update_user.html',
@@ -139,6 +195,7 @@ def update_user(id):
 				user_to_update=user_to_update
 			)
     else:
+        form.about_author.data = current_user.about_author
         return render_template(
 				'update_user.html',
 				form=form,
@@ -193,9 +250,14 @@ def login():
             if check_password_hash(user.password_hash, form.password.data):
                 login_user(user)
                 flash('Login Successfully!')
-                return redirect(url_for(
-                    'dashboard'
-                ))
+                if(user.id == 8):
+                    return redirect(url_for(
+                    'admin'
+                    ))
+                else:
+                    return redirect(url_for(
+                        'dashboard'
+                    ))
             else:
                 flash('Wrong Password - Try Again')
         else:
@@ -206,7 +268,7 @@ def login():
     )
 
 # Logout Page
-@app.route('/logout', methods=['GET', 'POST'])
+@app.route('/logout')
 @login_required
 def logout():
     logout_user()
@@ -235,6 +297,19 @@ def posts():
         'posts.html',
         posts = posts
         )
+
+# Get all Posts by user id
+# @app.route('/posts')
+# @login_required
+# def posts():
+    
+#     # Get all post by user id
+#     posts = Posts.query.filter(Posts.user_id == current_user.id)
+    
+#     return render_template(
+#         'posts.html',
+#         posts = posts
+#         )
     
 # Get Post By id
 @app.route('/posts/<int:id>')
@@ -249,6 +324,7 @@ def post(id):
 
 # Add Post
 @app.route('/add-post', methods=['GET', 'POST'])
+@login_required
 def add_post():
     form = PostForm()
     title = form.title.data
@@ -287,13 +363,13 @@ def add_post():
     
 # Edit Post
 @app.route('/posts/edit/<int:id>', methods=['GET', 'POST'])
+@login_required
 def edit_post(id):
     post= Posts.query.get_or_404(id)
     form= PostForm()
     
     if form.validate_on_submit():
         post.title = form.title.data
-        post.author = form.author.data
         post.slug = form.slug.data
         post.content = form.content.data
         
@@ -313,36 +389,53 @@ def edit_post(id):
                 form= form
             )
     form.content.data = post.content
-    return render_template(
-        'edit_post.html',
-        post= post,
-        form= form
-    )
+    if current_user.id == post.user_id:
+        return render_template(
+            'edit_post.html',
+            post= post,
+            form= form
+        )
+    else:
+        flash("You Aren't Authorize To Edit This Post!")
+        # posts = Posts.query.filter(Posts.user_id == current_user.id)
+        posts = Posts.query.order_by(Posts.date_posted)
+        return render_template(
+            'posts.html',
+            posts= posts
+        )
     
 # Delete Post
 @app.route('/posts/delete/<int:id>')
+@login_required
 def delete_post(id):
     # Delete post from the database
     post_to_delete = Posts.query.get_or_404(id)
+    user_id = current_user.id
     
     # Grab all posts from the database
     posts= Posts.query.order_by(Posts.date_posted)
-    try:
-        db.session.delete(post_to_delete)
-        db.session.commit()
-        flash('Post Deleted Successfully!')
-        
-        
+    
+    if user_id == post_to_delete.user.id:
+        try:
+            db.session.delete(post_to_delete)
+            db.session.commit()
+            flash('Post Deleted Successfully!')
+            return render_template(
+                'posts.html',
+                posts= posts
+                )
+        except:
+            flash('Whoops! There was a problem deleting the users')
+            return render_template(
+                'posts.html',
+                posts= posts
+            )
+    else:
+        flash("You Aren't Authorize To Delete That Post!")
         return render_template(
-			'posts.html',
+            'posts.html',
             posts= posts
-			)
-    except:
-        flash('Whoops! There was a problem deleting the users')
-        return render_template(
-			'posts.html',
-            posts= posts
-		)
+        )
 
 # Create Password Test Page
 @app.route('/test_pw', methods=['GET', 'POST'])
