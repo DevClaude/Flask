@@ -28,13 +28,40 @@
 			<br/>
 			{{post.content|safe}}
 		</small>
-		<br/>	
+		<br/>
+
+		<div class='card mb-3'>
+			<div class="row no-gutters">
+				<div class="col-md-2">
+					{% if post.user.profile_pic %}
+						<img src="{{ url_for('static', filename='images/' + post.user.profile_pic)}}" class='img-fluid' width="150" align="left">
+					{% else %}
+						<img src="{{ url_for('static', filename='images/default_profile_pic.png')}}" class='img-fluid' width="150" align="left">
+					{% endif %}
+				</div>
+				<div class="col-md-10">
+					<div class="card-body">
+						<h5 class="card-title">
+							{{ post.user.name }}			
+						</h5>
+						<p class="card-text">
+							{% if post.user.about_author %}
+								{{ post.user.about_author }}
+							{% else %}
+								Author has no about profile yet...
+							{% endif %}
+		
+						</p>
+					</div>
+				</div>
+			</div>
+		</div>
 	</div>
 
 	<a href={{url_for('posts')}} type='button' class='btn btn-outline-secondary btn-sm'>Back to Blog</a>
 	{% if post.user_id == current_user.id %}
-	<a href={{url_for('edit_post', id=post.id)}} type='button' class='btn btn-outline-secondary btn-sm'>Edit Post</a>
-	<a href={{url_for('delete_post', id=post.id)}} type='button' class='btn btn-outline-danger btn-sm'>Delete Post</a>
+		<a href={{url_for('edit_post', id=post.id)}} type='button' class='btn btn-outline-secondary btn-sm'>Edit Post</a>
+		<a href={{url_for('delete_post', id=post.id)}} type='button' class='btn btn-outline-danger btn-sm'>Delete Post</a>
 	{% endif %}
 
 {% endblock %}

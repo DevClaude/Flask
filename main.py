@@ -32,6 +32,10 @@ app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 db = SQLAlchemy(app)
 migrate = Migrate(app, db)
 
+# image path folder
+UPLOAD_FOLDER = 'static/images/'
+app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
+
 #----------------------- Model -------------------------#
 # Create Users Model
 class Users(db.Model, UserMixin):
@@ -166,36 +170,49 @@ def update_user(id):
     form = UserForm()
     user_to_update = Users.query.get_or_404(id)
     if request.method == 'POST':
+        file = request.files['profile_pic']
+        
         user_to_update.name = request.form['name']
         user_to_update.email = request.form['email']
         user_to_update.favorite_color = request.form['favorite_color']
         user_to_update.user_name = request.form['user_name']
         user_to_update.about_author = request.form['about_author']
-        file = request.files['profile_pic']
         
-        # Grab image
-        pic_filename = secure_filename(file.filename)
-        # Set UUID
-        pic_name = str(uuid.uuid1()) + '_' + pic_filename
-        user_to_update.profile_pic = pic_name
-        try:
-            form.about_author.data = current_user.about_author
+        form.about_author.data = current_user.about_author
+        if file:
+            if user_to_update.profile_pic != None:
+                os.remove(f'static/images/{user_to_update.profile_pic}')
+            # Grab image
+            pic_filename = secure_filename(file.filename)
+            # Set UUID
+            pic_name = str(uuid.uuid1()) + '_' + pic_filename
+            
+            user_to_update.profile_pic = pic_name
+            
+            try:
+                db.session.commit()
+                # Save The Image
+                file.save(os.path.join(app.config['UPLOAD_FOLDER'], pic_name))
+                flash('User Updated Successfully!')
+                return render_template(
+                    'dashboard.html',
+                    form=form
+                )
+            except:
+                flash('Error, looks like there was a problem please try again')
+                return render_template(
+                    'update_user.html',
+                    form=form,
+                    user_to_update=user_to_update
+                )
+        else:
             db.session.commit()
             flash('User Updated Successfully!')
             return render_template(
                 'dashboard.html',
                 form=form
             )
-        except:
-            form.about_author.data = current_user.about_author
-            flash('Error, looks like there was a problem please try again')
-            return render_template(
-				'update_user.html',
-				form=form,
-				user_to_update=user_to_update
-			)
     else:
-        form.about_author.data = current_user.about_author
         return render_template(
 				'update_user.html',
 				form=form,
@@ -205,29 +222,34 @@ def update_user(id):
 
 #Delete User on Database Record
 @app.route('/user/delete/<int:id>', methods=['GET', 'POST'])
+@login_required
 def delete_user(id):
     user= Users.query.get_or_404(id)
     name= None
     form= UserForm()
-    try:
-        db.session.delete(user)
-        db.session.commit()
-        flash('User Deleted Successfully!')
-        users = Users.query.order_by(Users.date)
-        return render_template(
-			'add_user.html',
-			form= form,
-			name= name,
-			users= users
-			)
-    except:
-        flash('Whoops! There was a problem deleting the users')
-        return render_template(
-			'add_user.html',
-			form= form,
-			name= name,
-			users= users
-		)
+    if current_user.id == user.id:
+        try:
+            db.session.delete(user)
+            db.session.commit()
+            flash('User Deleted Successfully!')
+            users = Users.query.order_by(Users.date)
+            return render_template(
+                'add_user.html',
+                form= form,
+                name= name,
+                users= users
+                )
+        except:
+            flash('Whoops! There was a problem deleting the users')
+            return render_template(
+                'add_user.html',
+                form= form,
+                name= name,
+                users= users
+            )
+    else:
+        flash("Sorry, you can't delete that user!")
+        return redirect(url_for('dashboard'))
 
 #-------------------------- Authentication Routes ------------------------
 # Flask_Login
